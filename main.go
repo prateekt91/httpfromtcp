@@ -8,17 +8,21 @@ import (
 	"os"
 )
 
+// getLinesChannel reads lines from the given file and sends them to a channel.
 func getLinesChannel(f io.ReadCloser) <-chan string {
 
 	out := make(chan string, 1)
 
+	// Start a goroutine to read lines from the file and send them to the channel.
 	go func() {
 
 		defer f.Close()
 		defer close(out)
 
+		// str is used to accumulate data until a newline is found.
 		str := ""
 
+		// Read data from the file in chunks and process it to extract lines.
 		for {
 			data := make([]byte, 8)
 			n, err := f.Read(data)
@@ -26,8 +30,10 @@ func getLinesChannel(f io.ReadCloser) <-chan string {
 				break
 			}
 
+			// Truncate the data slice to the number of bytes read.
 			data = data[:n]
 
+			// Check if there is a newline character in the data. If found, extract the line and send it to the channel.
 			if i := bytes.IndexByte(data, '\n'); i != -1 {
 				str += string(data[:i])
 				data = data[i+1:]
@@ -35,9 +41,11 @@ func getLinesChannel(f io.ReadCloser) <-chan string {
 				str = ""
 			}
 
+			// Append the remaining data to str for the next iteration.
 			str += string(data)
 		}
 
+		// If there is any remaining data in str after the loop, send it to the channel.
 		if len(str) != 0 {
 			out <- str
 		}
@@ -56,7 +64,6 @@ func main() {
 
 	lines := getLinesChannel(f)
 	for line := range lines {
-
 		fmt.Printf("read: %s\n", line)
 	}
 
