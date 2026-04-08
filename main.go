@@ -11,6 +11,7 @@ import (
 // getLinesChannel reads lines from the given file and sends them to a channel.
 func getLinesChannel(f io.ReadCloser) <-chan string {
 
+	// Create a channel to send lines read from the file. The channel is buffered with a capacity of 1 to allow for asynchronous reading.
 	out := make(chan string, 1)
 
 	// Start a goroutine to read lines from the file and send them to the channel.
