@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
+	"net"
 )
 
 // getLinesChannel reads lines from the given file and sends them to a channel.
@@ -17,8 +17,12 @@ func getLinesChannel(f io.ReadCloser) <-chan string {
 	// Start a goroutine to read lines from the file and send them to the channel.
 	go func() {
 
-		defer f.Close()
-		defer close(out)
+		defer func() {
+			fmt.Printf("File has been closed")
+			f.Close()
+			fmt.Printf("Channel has been closed")
+			close(out)
+		}()
 
 		// str is used to accumulate data until a newline is found.
 		str := ""
@@ -58,14 +62,19 @@ func getLinesChannel(f io.ReadCloser) <-chan string {
 
 func main() {
 
-	f, err := os.Open("messages.txt")
+	netListner, err := net.Listen("tcp", ":42069")
 	if err != nil {
 		log.Fatal("error", "error", err)
 	}
 
-	lines := getLinesChannel(f)
-	for line := range lines {
-		fmt.Printf("read: %s\n", line)
+	for {
+		conn, err := netListner.Accept()
+		if err != nil {
+			log.Fatal("error", "error", err)
+		}
+		for line := range getLinesChannel(conn) {
+			fmt.Printf("read: %s\n", line)
+		}
 	}
 
 }
